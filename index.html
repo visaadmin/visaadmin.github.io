@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Visa — AIIB</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* AIIB brand palette */
+  --sap-blue:#003A70;
+  --sap-blue-dark:#00264A;
+  --sap-blue-darker:#00264A;
+  --sap-accent:#EAAA00;
+  --sap-header:#003A70;
+  --sap-bg:#F5F6F7;
+  --sap-card:#FFFFFF;
+  --sap-text:#1A1A1A;
+  --sap-text-2:#51555B;
+  --sap-muted:#89919A;
+  --sap-border:#D9DCE1;
+  --sap-border-2:#EAEDF0;
+  --sap-hover:#EEF2F8;
+  --sap-success:#107C41;
+  --sap-success-bg:#E8F4EC;
+  --sap-warn:#EAAA00;
+  --sap-warn-bg:#FBF1DD;
+  --sap-danger:#BB0000;
+  --sap-danger-bg:#FBE9E9;
+  --sap-shadow:0 1px 3px rgba(0,0,0,.10);
+  --sap-radius:2px;
+  --sap-font:'Source Sans Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:var(--sap-font);background:var(--sap-bg);color:var(--sap-text);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:var(--sap-blue);text-decoration:none}
+
+.app-shell{display:flex;min-height:100vh}
+
+/* ===== Header (SAP shell top bar) ===== */
+.app-header{position:fixed;top:0;left:0;right:0;height:64px;background:var(--sap-header);display:flex;align-items:center;padding:0 20px;z-index:200;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.app-header .brand{display:flex;align-items:center;gap:14px;color:#fff;font-weight:700;font-size:15px;letter-spacing:.2px}
+.app-header .brand .brand-logo{height:46px;width:auto;object-fit:contain;object-position:left center;display:block}
+.app-header .brand .brand-title{color:#fff;font-weight:700;font-size:16px;letter-spacing:.2px}
+.app-header .header-sub{color:rgba(255,255,255,.72);font-size:12px;font-weight:400;margin-left:4px;padding-left:14px;border-left:1px solid rgba(255,255,255,.25)}
+.app-header .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.app-header .prod-tag{color:rgba(255,255,255,.75);font-size:11px;font-weight:500;background:rgba(255,255,255,.08);padding:4px 10px;border-radius:2px;letter-spacing:.3px}
+
+/* ===== Sidebar (SAP side navigation) ===== */
+.app-side{width:240px;background:#fff;border-right:1px solid var(--sap-border);position:fixed;top:64px;left:0;bottom:0;z-index:100;display:flex;flex-direction:column}
+.side-section{padding:14px 16px 6px;font-size:11px;font-weight:700;color:var(--sap-muted);text-transform:uppercase;letter-spacing:.6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 16px;font-size:13.5px;color:var(--sap-text-2);cursor:pointer;border-left:3px solid transparent;transition:background .15s,color .15s}
+.nav-item .ico{width:20px;text-align:center;font-size:15px;opacity:.8}
+.nav-item:hover{background:var(--sap-hover);color:var(--sap-text)}
+.nav-item.active{background:var(--sap-hover);color:var(--sap-blue);border-left-color:var(--sap-blue);font-weight:600}
+.side-foot{padding:12px 16px;border-top:1px solid var(--sap-border);margin-top:auto}
+.side-load{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--sap-accent);color:#003A70;border-radius:2px;font-size:13px;font-weight:700;cursor:pointer;justify-content:center;transition:background .15s}
+.side-load:hover{background:#D69A00}
+
+/* ===== Content ===== */
+.app-main{margin-left:240px;margin-top:64px;min-height:100vh;display:flex;flex-direction:column}
+.content{padding:24px 32px 48px}
+.page{display:none}
+.page.active{display:block}
+
+/* ===== Toolbar (page header + actions) ===== */
+.toolbar{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.toolbar .t-title{font-size:22px;font-weight:700;color:var(--sap-text)}
+.toolbar .t-sub{font-size:13px;color:var(--sap-muted);margin-top:2px}
+.toolbar-actions{display:flex;align-items:center;gap:10px}
+
+/* ===== SAP buttons ===== */
+.btn{font-family:var(--sap-font);font-size:13px;font-weight:600;padding:8px 16px;border-radius:2px;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;transition:all .15s;line-height:1.2}
+.btn-primary{background:var(--sap-blue);color:#fff}
+.btn-primary:hover{background:var(--sap-blue-dark)}
+.btn-emphasized{background:var(--sap-blue);color:#fff}
+.btn-emphasized:hover{background:var(--sap-blue-dark);box-shadow:0 0 0 1px var(--sap-blue-dark)}
+.btn-success{background:var(--sap-success);color:#fff}
+.btn-success:hover{background:#0C6435}
+.btn-ghost{background:#fff;color:var(--sap-blue);border-color:var(--sap-border)}
+.btn-ghost:hover{border-color:var(--sap-blue);background:var(--sap-hover)}
+
+.status-pill{font-size:12px;font-weight:600;padding:5px 12px;border-radius:14px;background:#EAEDF0;color:var(--sap-muted)}
+.status-pill.has{background:var(--sap-success-bg);color:var(--sap-success)}
+
+/* ===== Filter bar ===== */
+.filter-bar{background:#fff;border:1px solid var(--sap-border);border-radius:var(--sap-radius);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.filter-bar label{font-size:12px;font-weight:600;color:var(--sap-muted)}
+.filter-bar select,.filter-bar input{font-family:var(--sap-font);padding:8px 12px;border:1px solid var(--sap-border);border-radius:2px;font-size:13px;background:#fff;min-width:150px;color:var(--sap-text)}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--sap-accent);box-shadow:0 0 0 1px var(--sap-accent)}
+.btn-clear{padding:8px 12px;background:#fff;border:1px solid var(--sap-border);border-radius:2px;font-size:12px;color:var(--sap-muted);cursor:pointer;font-family:var(--sap-font)}
+.btn-clear:hover{border-color:var(--sap-danger);color:var(--sap-danger)}
+
+/* ===== KPI tiles (SAP analytical cards) ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.kpi-card{background:var(--sap-card);border:1px solid var(--sap-border);border-radius:var(--sap-radius);padding:18px 20px;box-shadow:var(--sap-shadow);position:relative;overflow:hidden}
+.kpi-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sap-blue)}
+.kpi-card.k-green::before{background:var(--sap-success)}
+.kpi-card.k-amber::before{background:var(--sap-warn)}
+.kpi-card.k-violet::before{background:#6A3EC9}
+.kpi-label{font-size:11.5px;font-weight:600;color:var(--sap-muted);text-transform:uppercase;letter-spacing:.4px}
+.kpi-value{font-size:30px;font-weight:700;color:var(--sap-text);margin-top:6px;line-height:1.1}
+.kpi-change{font-size:12px;margin-top:4px;color:var(--sap-muted)}
+.kpi-change.up{color:var(--sap-success)}
+.kpi-change.down{color:var(--sap-danger)}
+
+/* ===== Chart cards ===== */
+.charts-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
+.chart-card{background:var(--sap-card);border:1px solid var(--sap-border);border-radius:var(--sap-radius);padding:18px 20px;box-shadow:var(--sap-shadow)}
+.chart-title{font-size:14px;font-weight:700;color:var(--sap-text);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.chart-title .badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:12px;background:var(--sap-bg);color:var(--sap-muted);text-transform:uppercase;letter-spacing:.4px}
+.chart-card canvas{max-height:280px}
+.chart-full{grid-column:1/-1}
+
+/* ===== Table ===== */
+.table-card{background:var(--sap-card);border:1px solid var(--sap-border);border-radius:var(--sap-radius);padding:0;box-shadow:var(--sap-shadow);margin-bottom:22px;overflow:hidden}
+.table-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--sap-border)}
+.table-title{font-size:14px;font-weight:700;color:var(--sap-text)}
+.table-count{font-size:12px;color:var(--sap-muted)}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{padding:11px 16px;font-size:11.5px;font-weight:700;color:var(--sap-muted);text-transform:uppercase;letter-spacing:.4px;background:var(--sap-bg);border-bottom:1px solid var(--sap-border);text-align:left;cursor:pointer;white-space:nowrap;font-family:var(--sap-font)}
+.data-table th:hover{color:var(--sap-blue)}
+.data-table td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--sap-border-2);color:var(--sap-text)}
+.data-table tbody tr:hover{background:var(--sap-hover)}
+.data-table tbody tr:last-child td{border-bottom:none}
+.sbadge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap}
+.sbadge.s-requestreceived{background:#E3EAFB;color:#003A70}
+.sbadge.s-completeddocumentreceived{background:#EDE7F6;color:#5B3FA0}
+.sbadge.s-submissionprepared{background:var(--sap-warn-bg);color:#8A5F00}
+.sbadge.s-applicationsubmittedtoauthority{background:var(--sap-blue);color:#fff}
+.sbadge.s-applicationcompleted{background:var(--sap-success-bg);color:var(--sap-success)}
+.sbadge.s-staffnotifiedfordocumentcollection{background:#BFE3CC;color:#0C6435}
+.sbadge.s-requestcompletedandclosed{background:#0C6435;color:#fff}
+
+/* ===== Insights ===== */
+.insight-card{background:var(--sap-card);border:1px solid var(--sap-border);border-radius:var(--sap-radius);padding:18px 22px;box-shadow:var(--sap-shadow);margin-bottom:14px}
+.insight-title{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--sap-text);display:flex;align-items:center;gap:8px}
+.insight-title::before{content:"";width:8px;height:8px;background:var(--sap-blue);border-radius:1px;display:inline-block}
+.insight-body{font-size:13px;color:var(--sap-text-2);line-height:1.7}
+.istat{display:inline-block;padding:3px 10px;background:var(--sap-bg);border:1px solid var(--sap-border-2);border-radius:2px;font-size:12px;font-weight:600;margin:3px 0;color:var(--sap-blue-dark)}
+
+/* ===== Modal ===== */
+.modal-overlay{position:fixed;inset:0;z-index:9000;background:rgba(50,54,58,.45);display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:4px;padding:28px;width:560px;max-width:92vw;box-shadow:0 6px 24px rgba(0,0,0,.22);border-top:4px solid var(--sap-blue)}
+.modal h3{font-size:17px;font-weight:700;margin-bottom:14px;color:var(--sap-text)}
+.modal-close{float:right;font-size:22px;cursor:pointer;color:var(--sap-muted);line-height:1;margin-top:-6px}
+.modal input[type=file]{width:100%;padding:12px;border:1px dashed var(--sap-border);border-radius:2px;background:var(--sap-bg);margin-bottom:16px;font-family:var(--sap-font)}
+
+/* ===== Toast ===== */
+.toast{position:fixed;bottom:24px;right:24px;z-index:9500;padding:14px 20px;border-radius:2px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.22);transform:translateY(80px);opacity:0;transition:all .3s;font-family:var(--sap-font)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--sap-success)}
+.toast.error{background:var(--sap-danger)}
+.toast.info{background:var(--sap-blue)}
+
+@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}
+@media(max-width:768px){.app-side{transform:translateX(-100%)}.app-main{margin-left:0}.kpi-grid{grid-template-columns:1fr}.filter-bar{flex-direction:column;align-items:stretch}.content{padding:16px}}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--sap-border);border-radius:4px}
+
+/* ===== Admin gate ===== */
+.app-shell.locked .lock-banner{display:flex}
+.lock-banner{display:none;position:fixed;top:64px;left:0;right:0;z-index:150;justify-content:center;padding:8px;background:rgba(0,58,112,.92);color:#fff;font-size:12.5px;font-weight:600;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.lock-banner button{background:var(--sap-accent);color:#003A70;border:0;border-radius:2px;padding:6px 14px;font-weight:700;font-size:12.5px;cursor:pointer;font-family:var(--sap-font)}
+.lock-banner button:hover{background:#D69A00}
+.admin-badge{display:none;align-items:center;gap:7px;font-size:11px;font-weight:700;color:#fff;background:rgba(234,170,0,.22);border:1px solid rgba(234,170,0,.6);padding:4px 10px;border-radius:14px}
+.admin-badge.show{display:inline-flex}
+.admin-logout{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:2px;padding:4px 9px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sap-font);margin-left:2px}
+.admin-logout:hover{background:rgba(255,255,255,.12)}
+/* restricted overlay over the Records page when locked */
+.records-locked-overlay{display:none;position:absolute;inset:0;z-index:60;align-items:center;justify-content:center;background:#FFFFFF;text-align:center;flex-direction:column;gap:14px;padding:24px}
+/* When locked, fully hide the table structure so nothing shows through */
+.app-shell.locked #page-records .data-table,
+.app-shell.locked #page-records .table-head{visibility:hidden}
+.records-locked-overlay.show{display:flex}
+.records-locked-overlay .lock-ico{font-size:40px}
+.records-locked-overlay h3{color:var(--sap-text);font-size:17px}
+.records-locked-overlay p{color:var(--sap-text-2);font-size:13px;max-width:360px}
+/* hide data-action controls from the public */
+.app-shell.locked .toolbar-actions .btn[data-adminonly]{display:none}
+.app-shell.locked .side-foot{display:none}
+</style>
+</head>
+<body>
+
+<div class="app-shell locked" id="appShell">
+  <!-- AIIB branded header -->
+  <header class="app-header">
+    <div class="brand">
+      <img class="brand-logo" src="aiib-logo.png" alt="AIIB Logo">
+      <span class="brand-title">Travel Visa</span>
+      <span class="header-sub">Visa Processing Analytics</span>
+    </div>
+    <div class="header-right">
+      <span class="admin-badge" id="adminBadge">🔓 Admin <button class="admin-logout" onclick="adminLogout()">Exit</button></span>
+      <span class="prod-tag">Asian Infrastructure Investment Bank</span>
+      <button class="btn btn-ghost" id="adminLoginBtn" onclick="openLogin()" style="color:#fff;border-color:rgba(255,255,255,.5)">🔐 Admin Login</button>
+    </div>
+  </header>
+  <div class="lock-banner">
+    <span>🔒 Records are restricted — only aggregated analytics are shown publicly.</span>
+    <button onclick="openLogin()">Unlock with Admin Access</button>
+  </div>
+
+  <!-- Side navigation -->
+  <nav class="app-side">
+    <div class="side-section">Analytics</div>
+    <div class="nav-item active" data-page="overview" onclick="navigateTo('overview')"><span class="ico">📊</span> Overview</div>
+    <div class="nav-item" data-page="trends" onclick="navigateTo('trends')"><span class="ico">📈</span> Trends</div>
+    <div class="nav-item" data-page="correlation" onclick="navigateTo('correlation')"><span class="ico">🔗</span> Correlations</div>
+    <div class="nav-item" data-page="insights" onclick="navigateTo('insights')"><span class="ico">💡</span> Insights</div>
+    <div class="side-section">Data</div>
+    <div class="nav-item" data-page="records" onclick="navigateTo('records')"><span class="ico">📋</span> Records</div>
+    <div class="side-foot"><div class="side-load" onclick="openDataModal()">📂 Load Excel</div></div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="app-main">
+    <div class="content">
+      <div class="toolbar">
+        <div><div class="t-title" id="pageTitle">Overview</div><div class="t-sub" id="pageSubtitle">Visa processing performance at a glance</div></div>
+        <div class="toolbar-actions">
+          <span id="dataStatus" class="status-pill">No data loaded</span>
+          <button class="btn btn-ghost" data-adminonly onclick="openDataModal()">📂 Load Excel</button>
+          <button class="btn btn-success" data-adminonly onclick="exportExcel()">⬇ Export Excel</button>
+          <button class="btn btn-primary" data-adminonly onclick="downloadTemplate()">📄 Template</button>
+        </div>
+      </div>
+
+      <!-- OVERVIEW -->
+      <div class="page active" id="page-overview">
+        <div class="kpi-grid" id="kpiGrid"></div>
+        <div class="filter-bar">
+          <label>Filters</label>
+          <select id="fVisaType"><option value="">All Visa Types</option></select>
+          <select id="fNationality"><option value="">All Nationalities</option></select>
+          <select id="fDestination"><option value="">All Destinations</option></select>
+          <select id="fStatus"><option value="">All Statuses</option></select>
+          <select id="fYear"><option value="">All Years</option></select>
+          <input type="text" id="fSearch" placeholder="Search applicant..." style="min-width:180px;">
+          <button class="btn-clear" onclick="clearFilters()">✕ Clear</button>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card"><div class="chart-title">Visa Type Distribution <span class="badge">Volume</span></div><canvas id="chType"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Processing Status Pipeline <span class="badge">Status</span></div><canvas id="chStatus"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Top Applicant Nationalities <span class="badge">Nationality</span></div><canvas id="chNat"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Top Destination Countries <span class="badge">Destination</span></div><canvas id="chDest"></canvas></div>
+        </div>
+      </div>
+
+      <!-- TRENDS -->
+      <div class="page" id="page-trends">
+        <div class="filter-bar">
+          <label>Filters</label>
+          <select id="tfVisaType"><option value="">All Visa Types</option></select>
+          <select id="tfNationality"><option value="">All Nationalities</option></select>
+          <select id="tfYear"><option value="">All Years</option></select>
+          <button class="btn-clear" onclick="clearTrendFilters()">✕ Clear</button>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card chart-full"><div class="chart-title">Monthly Request Volume <span class="badge">Time Series</span></div><canvas id="chTrendVol"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Completion Rate Trend <span class="badge">Rate %</span></div><canvas id="chTrendComp"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Processing Time Trend <span class="badge">Avg Days</span></div><canvas id="chTrendProc"></canvas></div>
+        </div>
+      </div>
+
+      <!-- CORRELATION -->
+      <div class="page" id="page-correlation">
+        <div class="charts-grid">
+          <div class="chart-card chart-full"><div class="chart-title">Completion Rate vs. Processing Time <span class="badge">Scatter</span></div><canvas id="chScatter"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Nationality vs. Status Pipeline <span class="badge">Cross-tab</span></div><canvas id="chCross"></canvas></div>
+          <div class="chart-card"><div class="chart-title">Destination vs. Avg Processing Days <span class="badge">Relationship</span></div><canvas id="chDestProc"></canvas></div>
+        </div>
+        <div class="insight-card"><div class="insight-title">Key Correlation Findings</div><div class="insight-body" id="corrInsights"></div></div>
+      </div>
+
+      <!-- INSIGHTS -->
+      <div class="page" id="page-insights"><div id="insightsContent"></div></div>
+
+      <!-- RECORDS -->
+      <div class="page" id="page-records">
+        <div class="table-card" style="position:relative;">
+          <div class="records-locked-overlay" id="recordsLock">
+            <div class="lock-ico">🔒</div>
+            <h3>Restricted Records</h3>
+            <p>This detailed applicant-level record table contains sensitive personal information and is only visible to authenticated administrators. Public visitors can view all aggregated analytics on the Overview, Trends, Correlations and Insights pages.</p>
+            <button class="btn btn-primary" onclick="openLogin()">🔐 Admin Login to View</button>
+          </div>
+          <div class="table-head"><div class="table-title">Visa Processing Records</div><div class="table-count" id="tableCount">0 records</div></div>
+          <div class="table-head"><div class="table-title">Visa Processing Records</div><div class="table-count" id="tableCount">0 records</div></div>
+          <div style="overflow-x:auto;">
+            <table class="data-table" id="dataTable"><thead><tr>
+              <th onclick="sortTable(0)">ID</th><th onclick="sortTable(1)">Applicant</th><th onclick="sortTable(2)">Visa Type</th>
+              <th onclick="sortTable(3)">Nationality</th><th onclick="sortTable(4)">Destination</th><th onclick="sortTable(5)">Status</th>
+              <th onclick="sortTable(6)">Request Date</th><th onclick="sortTable(7)">Completion Date</th><th onclick="sortTable(8)">Days</th><th onclick="sortTable(9)">Priority</th>
+            </tr></thead><tbody id="tableBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Load Modal -->
+<div class="modal-overlay" id="dataModal">
+  <div class="modal">
+    <span class="modal-close" onclick="closeDataModal()">×</span>
+    <h3>📂 Load Visa Data from Excel</h3>
+    <p style="font-size:13px;color:var(--sap-text-2);margin-bottom:16px;">Select a <code>.xlsx</code> file with the standardized columns. The dashboard reads it entirely in your browser — nothing is uploaded.</p>
+    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelFile()">
+    <div style="display:flex;gap:12px;">
+      <button class="btn btn-primary" onclick="document.getElementById('excelFile').click()">Choose File</button>
+      <button class="btn btn-ghost" onclick="downloadTemplate()">Download Template</button>
+      <button class="btn btn-ghost" onclick="closeDataModal()">Cancel</button>
+    </div>
+    <div id="loadMsg" style="margin-top:16px;font-size:13px;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== ADMIN LOGIN GATE ===== -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="width:400px;max-width:92vw;text-align:center">
+    <span class="modal-close" onclick="closeLogin()">×</span>
+    <div style="margin-bottom:6px"><img src="aiib-logo.png" alt="AIIB" style="height:38px;width:auto"></div>
+    <h3 style="margin-top:8px">Administrator Access</h3>
+    <p style="font-size:12.5px;color:var(--sap-text-2);margin-bottom:18px;">Enter your credentials to unlock detailed records and data management.</p>
+    <div style="text-align:left;margin-bottom:12px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--sap-text-2);margin-bottom:6px;">Username</label>
+      <input type="text" id="loginUser" autocomplete="off" placeholder="admin" style="width:100%;padding:10px 12px;border:1px solid var(--sap-border);border-radius:2px;font-family:var(--sap-font);font-size:14px">
+    </div>
+    <div style="text-align:left;margin-bottom:6px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--sap-text-2);margin-bottom:6px;">Passcode</label>
+      <input type="password" id="loginPass" placeholder="••••••••" style="width:100%;padding:10px 12px;border:1px solid var(--sap-border);border-radius:2px;font-family:var(--sap-font);font-size:14px" onkeydown="if(event.key==='Enter')submitLogin()">
+    </div>
+    <div id="loginErr" style="display:none;color:var(--sap-danger);font-size:12.5px;font-weight:600;margin:8px 0 0;text-align:left"></div>
+    <div style="display:flex;gap:12px;margin-top:18px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="submitLogin()">Sign In</button>
+      <button class="btn btn-ghost" onclick="closeLogin()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ===== CONFIG =====
+const STATUS_LIST=[
+  'Request Received','Completed Document Received','Submission Prepared',
+  'Application Submitted to Authority','Application Completed',
+  'Staff Notified for Document Collection','Request Completed and Closed'
+];
+const STATUS_COLORS={
+  'Request Received':'#003A70','Completed Document Received':'#5B7CA8','Submission Prepared':'#EAAA00',
+  'Application Submitted to Authority':'#1B5FA8','Application Completed':'#107C41',
+  'Staff Notified for Document Collection':'#0C9A52','Request Completed and Closed':'#00264A'
+};
+const STATUS_CSS={};
+STATUS_LIST.forEach(s=>{STATUS_CSS[s]='s-'+s.toLowerCase().replace(/[^a-z]/g,'')});
+const FINAL=['Application Completed','Staff Notified for Document Collection','Request Completed and Closed'];
+const INPROG=['Request Received','Completed Document Received','Submission Prepared','Application Submitted to Authority'];
+const TEMPLATE_HEADERS=['ID','Applicant','Visa Type','Nationality','Destination','Status','Request Date','Completion Date','Processing Days','Priority'];
+const SHEET_NAME='VisaData';
+
+// ===== ADMIN ACCESS (lightweight gate — username + passcode) =====
+// Credentials are stored in the client for convenience only; this is an access
+// barrier, NOT real security. Replace the values below to change credentials.
+const ADMIN_USER='admin';
+const ADMIN_PASS='AIIB2025';
+const ADMIN_KEY='visaDash_admin';
+function isAdmin(){try{return sessionStorage.getItem(ADMIN_KEY)==='1';}catch(e){return false;}}
+function applyAccess(){
+  const shell=document.getElementById('appShell');
+  const admin=isAdmin();
+  shell.classList.toggle('locked',!admin);
+  document.getElementById('adminBadge').classList.toggle('show',admin);
+  document.getElementById('adminLoginBtn').style.display=admin?'none':'';
+  document.getElementById('recordsLock').classList.toggle('show',!admin);
+}
+function openLogin(){document.getElementById('loginErr').style.display='none';document.getElementById('loginUser').value='';document.getElementById('loginPass').value='';document.getElementById('loginModal').classList.add('show');setTimeout(()=>document.getElementById('loginUser').focus(),50);}
+function closeLogin(){document.getElementById('loginModal').classList.remove('show');}
+function submitLogin(){
+  const u=document.getElementById('loginUser').value.trim();
+  const p=document.getElementById('loginPass').value;
+  if(u===ADMIN_USER&&p===ADMIN_PASS){
+    try{sessionStorage.setItem(ADMIN_KEY,'1');}catch(e){}
+    closeLogin();applyAccess();
+    toast('Admin access granted','success');
+  }else{
+    const el=document.getElementById('loginErr');el.textContent='✕ Invalid username or passcode. Please try again.';el.style.display='block';
+  }
+}
+function adminLogout(){
+  try{sessionStorage.removeItem(ADMIN_KEY);}catch(e){}
+  applyAccess();
+  document.getElementById('page-records')?.classList.remove('active');
+  navigateTo('overview');
+  toast('Admin session ended','info');
+}
+
+// ===== STATE =====
+let visaData=[];
+let charts={};
+let sortDir={};
+
+// ===== TEMPLATE (standardized Excel) =====
+function downloadTemplate(){
+  const sample=[
+    [1,'John Doe','Business Visa','Singapore','United States','Request Received','2024-09-01','2024-10-15',44,'Normal'],
+    [2,'Jane Smith','Visitor Visa','Malaysia','Japan','Application Completed','2024-08-10','2024-09-20',41,'High']
+  ];
+  const ws=XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS,...sample]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,SHEET_NAME);
+  XLSX.writeFile(wb,'visa_template.xlsx');
+  toast('Template downloaded','info');
+}
+
+// ===== IMPORT =====
+function openDataModal(){document.getElementById('dataModal').classList.add('show')}
+function closeDataModal(){document.getElementById('dataModal').classList.remove('show');document.getElementById('loadMsg').innerHTML=''}
+
+function handleExcelFile(){
+  const f=document.getElementById('excelFile').files[0];
+  if(!f){return;}
+  const msg=document.getElementById('loadMsg');
+  msg.innerHTML='<span style="color:var(--sap-muted)">Reading '+f.name+'...</span>';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const parsed=parseRows(rows);
+      if(!parsed.length){msg.innerHTML='<span style="color:var(--sap-danger)">No valid data rows found. Check the template format.</span>';return;}
+      visaData=parsed;
+      persistCache();
+      closeDataModal();
+      rebuildAll();
+      toast(`Loaded ${parsed.length} records from Excel`,'success');
+    }catch(err){msg.innerHTML='<span style="color:var(--sap-danger)">Failed to read: '+err.message+'</span>';}
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function parseRows(rows){
+  if(rows.length<2)return [];
+  const header=rows[0].map(h=>String(h).trim());
+  const idx=col=>header.findIndex(h=>h.toLowerCase()===col.toLowerCase());
+  const out=[];
+  let maxId=0;
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||r.every(c=>c===''||c==null))continue;
+    const get=name=>{const i=idx(name);return i>=0?String(r[i]??'').trim():''};
+    let id=parseInt(get('ID'))||0;
+    if(id===0)id=++maxId+1000;
+    maxId=Math.max(maxId,id);
+    const rec={
+      id, applicant:get('Applicant'), visaType:get('Visa Type'), nationality:get('Nationality'),
+      destination:get('Destination'), status:get('Status'),
+      appDate:get('Request Date')||null, decDate:get('Completion Date')||null,
+      procDays:get('Processing Days')?parseInt(get('Processing Days')):null, priority:get('Priority')||'Normal'
+    };
+    if(!rec.applicant||!rec.visaType||!rec.nationality||!rec.destination||!rec.status)continue;
+    out.push(rec);
+  }
+  return out;
+}
+
+// ===== EXPORT =====
+function exportExcel(){
+  if(!visaData.length){toast('No data to export','error');return;}
+  const body=visaData.map(x=>[x.id,x.applicant,x.visaType,x.nationality,x.destination,x.status,x.appDate||'',x.decDate||'',x.procDays??'',x.priority]);
+  const ws=XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS,...body]);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,SHEET_NAME);
+  XLSX.writeFile(wb,'visa_data_export.xlsx');
+  toast('Excel exported','success');
+}
+
+// ===== CACHE (localStorage, convenience only) =====
+function persistCache(){try{localStorage.setItem('visaDash_cache',JSON.stringify(visaData));}catch(e){}updateStatus();}
+function loadCache(){try{const s=localStorage.getItem('visaDash_cache');if(s){visaData=JSON.parse(s);updateStatus();return true;}}catch(e){}return false;}
+function updateStatus(){
+  const el=document.getElementById('dataStatus');
+  if(visaData.length){el.textContent=`● ${visaData.length} records loaded`;el.className='status-pill has';}
+  else{el.textContent='No data loaded';el.className='status-pill';}
+}
+
+// ===== NAV =====
+function navigateTo(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+  document.getElementById('page-'+page)?.classList.add('active');
+  const T={overview:['Overview','Visa processing performance at a glance'],trends:['Trends','Time-based patterns'],correlation:['Correlations','Data relationships'],insights:['Insights','Analytical findings'],records:['Records','Complete data table']};
+  const t=T[page]||['Dashboard',''];
+  document.getElementById('pageTitle').textContent=t[0];
+  document.getElementById('pageSubtitle').textContent=t[1];
+  renderPage(page);
+}
+
+// ===== FILTERS =====
+function populateFilters(){
+  const types=[...new Set(visaData.map(d=>d.visaType))].sort();
+  const nat=[...new Set(visaData.map(d=>d.nationality))].sort();
+  const dest=[...new Set(visaData.map(d=>d.destination))].sort();
+  const yrs=[...new Set(visaData.map(d=>d.appDate&&d.appDate.substring(0,4)))].filter(Boolean).sort();
+  fill('fVisaType',types);fill('fNationality',nat);fill('fDestination',dest);fill('fStatus',STATUS_LIST);fill('fYear',yrs);
+  fill('tfVisaType',types);fill('tfNationality',nat);fill('tfYear',yrs);
+}
+// fill a <select> while PRESERVING the current selection (otherwise every
+// rebuild would reset the dropdown to "All" and lose the user's filter)
+function fill(id,opts){
+  const s=document.getElementById(id);if(!s)return;
+  const all=s.options[0]?.textContent||'All';
+  const prev=s.value;
+  s.innerHTML=`<option value="">${all}</option>`+opts.map(o=>`<option>${o}</option>`).join('');
+  if(prev && [...s.options].some(o=>o.value===prev)) s.value=prev;
+}
+function getFiltered(){
+  let d=[...visaData];
+  const vt=document.getElementById('fVisaType')?.value||'';
+  const nat=document.getElementById('fNationality')?.value||'';
+  const dest=document.getElementById('fDestination')?.value||'';
+  const st=document.getElementById('fStatus')?.value||'';
+  const yr=document.getElementById('fYear')?.value||'';
+  const sr=document.getElementById('fSearch')?.value?.toLowerCase()||'';
+  if(vt)d=d.filter(x=>x.visaType===vt);
+  if(nat)d=d.filter(x=>x.nationality===nat);
+  if(dest)d=d.filter(x=>x.destination===dest);
+  if(st)d=d.filter(x=>x.status===st);
+  if(yr)d=d.filter(x=>x.appDate&&x.appDate.startsWith(yr));
+  if(sr)d=d.filter(x=>x.applicant.toLowerCase().includes(sr));
+  return d;
+}
+function clearFilters(){['fVisaType','fNationality','fDestination','fStatus','fYear','fSearch'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});rebuildAll();}
+function clearTrendFilters(){['tfVisaType','tfNationality','tfYear'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderTrends(getFiltered());}
+
+document.addEventListener('change',e=>{if((e.target.id||'').startsWith('f')||(e.target.id||'').startsWith('tf'))rebuildAll();});
+document.addEventListener('input',e=>{if(e.target.id==='fSearch')rebuildAll();});
+
+// ===== RENDER =====
+function rebuildAll(){populateFilters();renderActive();}
+// re-render only the currently active page (keeps the user on whatever tab they're on)
+function renderActive(){
+  const active=document.querySelector('.nav-item.active');
+  const page=active?active.getAttribute('data-page'):'overview';
+  renderPage(page);
+}
+function renderPage(page){
+  const d=getFiltered();
+  switch(page){
+    case'overview':renderKPIs(d);renderOverview(d);break;
+    case'trends':renderTrends(d);break;
+    case'correlation':renderCorr(d);break;
+    case'insights':renderInsights(d);break;
+    case'records':renderRecords(d);break;
+  }
+}
+
+function renderKPIs(d){
+  const total=d.length,comp=d.filter(x=>FINAL.includes(x.status)).length,ip=d.filter(x=>INPROG.includes(x.status)).length;
+  const cr=total?(comp/total*100).toFixed(1):0;
+  const wd=d.filter(x=>x.procDays!==null);const avg=wd.length?(wd.reduce((s,x)=>s+x.procDays,0)/wd.length).toFixed(1):0;
+  const rcv=d.filter(x=>x.status==='Request Received').length;
+  const k=[
+    {l:'Total Requests',v:total,cls:'',chg:`${ip} in pipeline`,up:true},
+    {l:'Completion Rate',v:cr+'%',cls:'k-green',chg:`${comp} completed`,up:true},
+    {l:'Avg Processing',v:avg+'d',cls:'k-amber',chg:`${rcv} new`,up:false},
+    {l:'In Pipeline',v:ip,cls:'k-violet',chg:`${(ip/total*100||0).toFixed(1)}%`,up:false}
+  ];
+  document.getElementById('kpiGrid').innerHTML=k.map(x=>`<div class="kpi-card ${x.cls}"><div class="kpi-label">${x.l}</div><div class="kpi-value">${x.v}</div><div class="kpi-change ${x.up?'up':'down'}">${x.chg}</div></div>`).join('');
+}
+
+function destroy(id){if(charts[id]){charts[id].destroy();charts[id]=null;}}
+function chart(id,cfg){destroy(id);const ctx=document.getElementById(id)?.getContext('2d');if(ctx)charts[id]=new Chart(ctx,cfg);}
+
+function renderOverview(d){
+  const tc={};d.forEach(x=>{tc[x.visaType]=(tc[x.visaType]||0)+1;});
+  chart('chType',{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:['#003A70','#EAAA00','#107C41'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11},padding:12}},cutout:'55%'}}});
+  const sc={};STATUS_LIST.forEach(s=>{sc[s]=d.filter(x=>x.status===s).length;});
+  chart('chStatus',{type:'bar',data:{labels:STATUS_LIST.map(s=>s.length>20?s.substring(0,18)+'…':s),datasets:[{data:STATUS_LIST.map(s=>sc[s]),backgroundColor:STATUS_LIST.map(s=>STATUS_COLORS[s]),borderRadius:2,barThickness:28}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{display:false}}}}});
+  const nc={};d.forEach(x=>{nc[x.nationality]=(nc[x.nationality]||0)+1;});
+  const sn=Object.entries(nc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  chart('chNat',{type:'bar',data:{labels:sn.map(c=>c[0]),datasets:[{data:sn.map(c=>c[1]),backgroundColor:'#003A70',borderRadius:2,barThickness:24}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAEDF0'}},x:{grid:{display:false}}}}});
+  const dc={};d.forEach(x=>{dc[x.destination]=(dc[x.destination]||0)+1;});
+  const sd=Object.entries(dc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  chart('chDest',{type:'bar',data:{labels:sd.map(c=>c[0]),datasets:[{data:sd.map(c=>c[1]),backgroundColor:'#1B5FA8',borderRadius:2,barThickness:24}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAEDF0'}},x:{grid:{display:false}}}}});
+}
+
+function fmtM(m){const[y,mo]=m.split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)-1]+' '+y;}
+
+function renderTrends(d){
+  const mv={};d.forEach(x=>{if(x.appDate){const m=x.appDate.substring(0,7);mv[m]=(mv[m]||0)+1;}});
+  const mo=Object.keys(mv).sort();
+  chart('chTrendVol',{type:'line',data:{labels:mo.map(fmtM),datasets:[{label:'Requests',data:mo.map(m=>mv[m]),borderColor:'#003A70',backgroundColor:'rgba(0,58,112,.08)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#003A70'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAEDF0'}},x:{grid:{display:false},ticks:{maxRotation:45}}}}});
+  const ms={};d.forEach(x=>{if(x.appDate&&x.status){const m=x.appDate.substring(0,7);if(!ms[m])ms[m]={t:0,c:0};ms[m].t++;if(FINAL.includes(x.status))ms[m].c++;}});
+  const amo=Object.keys(ms).sort();
+  chart('chTrendComp',{type:'line',data:{labels:amo.map(fmtM),datasets:[{label:'Completion %',data:amo.map(m=>(ms[m].c/ms[m].t*100).toFixed(1)),borderColor:'#107C41',backgroundColor:'rgba(16,124,65,.08)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#107C41'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:0,max:100,title:{display:true,text:'%'},grid:{color:'#EAEDF0'}},x:{grid:{display:false},ticks:{maxRotation:45}}}}});
+  const mp={};d.filter(x=>x.procDays!==null&&x.appDate).forEach(x=>{const m=x.appDate.substring(0,7);(mp[m]=mp[m]||[]).push(x.procDays);});
+  const pmo=Object.keys(mp).sort();
+  chart('chTrendProc',{type:'line',data:{labels:pmo.map(fmtM),datasets:[{label:'Avg Days',data:pmo.map(m=>(mp[m].reduce((s,v)=>s+v,0)/mp[m].length).toFixed(1)),borderColor:'#EAAA00',backgroundColor:'rgba(234,170,0,.08)',fill:true,tension:.3,pointRadius:4,pointBackgroundColor:'#EAAA00'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'Days'},grid:{color:'#EAEDF0'}},x:{grid:{display:false},ticks:{maxRotation:45}}}}});
+}
+
+function renderCorr(d){
+  const ts={};d.forEach(x=>{if(!ts[x.visaType])ts[x.visaType]={t:0,c:0,days:[]};ts[x.visaType].t++;if(FINAL.includes(x.status))ts[x.visaType].c++;if(x.procDays!==null)ts[x.visaType].days.push(x.procDays);});
+  const sd=Object.entries(ts).map(([t,s])=>({x:s.t?(s.c/s.t*100):0,y:s.days.length?s.days.reduce((a,b)=>a+b,0)/s.days.length:0,l:t}));
+  chart('chScatter',{type:'scatter',data:{datasets:[{label:'Visa Types',data:sd.map(s=>({x:s.x,y:s.y})),pointRadius:12,pointBackgroundColor:['#003A70','#EAAA00','#107C41'],pointBorderColor:'#fff',pointBorderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{callbacks:{label:function(ctx){const i=ctx.dataIndex;return `${sd[i].l}: ${sd[i].x.toFixed(1)}% done, ${sd[i].y.toFixed(1)}d avg`;}}}},scales:{x:{title:{display:true,text:'Completion %'},min:0,max:100},y:{title:{display:true,text:'Avg Days'}}}}});
+  const ns={};d.forEach(x=>{if(!ns[x.nationality])ns[x.nationality]={};ns[x.nationality][x.status]=(ns[x.nationality][x.status]||0)+1;});
+  const topN=Object.entries(ns).sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0)).slice(0,6).map(e=>e[0]);
+  const shortS=STATUS_LIST.map(s=>s.length>15?s.replace(/Application Submitted to Authority/,'App.Sub').replace(/Staff Notified for Document Collection/,'Staff Notified').replace(/Request Completed and Closed/,'Closed').replace(/Completed Document Received/,'Docs Rcv'):s);
+  chart('chCross',{type:'bar',data:{labels:topN,datasets:STATUS_LIST.map((s,i)=>({label:shortS[i],data:topN.map(n=>ns[n]?.[s]||0),backgroundColor:STATUS_COLORS[s],borderRadius:2}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:9},padding:6}}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:'#EAEDF0'}}}}});
+  const dp={};d.filter(x=>x.procDays!==null).forEach(x=>{(dp[x.destination]=dp[x.destination]||[]).push(x.procDays);});
+  const da=Object.entries(dp).map(([dest,days])=>({dest,avg:days.reduce((s,v)=>s+v,0)/days.length})).sort((a,b)=>b.avg-a.avg);
+  chart('chDestProc',{type:'bar',data:{labels:da.map(c=>c.dest),datasets:[{label:'Avg Days',data:da.map(c=>c.avg.toFixed(1)),backgroundColor:da.map(c=>c.avg>80?'#BB0000':c.avg>50?'#EAAA00':'#107C41'),borderRadius:2,barThickness:24}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{grid:{color:'#EAEDF0'},title:{display:true,text:'Avg Days'}},x:{grid:{display:false}}}}});
+  const comp=d.filter(x=>FINAL.includes(x.status)&&x.procDays!==null), ip=d.filter(x=>INPROG.includes(x.status)&&x.procDays!==null);
+  const ac=comp.length?(comp.reduce((s,x)=>s+x.procDays,0)/comp.length).toFixed(1):'N/A';
+  const ai=ip.length?(ip.reduce((s,x)=>s+x.procDays,0)/ip.length).toFixed(1):'N/A';
+  const bv={};d.forEach(x=>{if(!bv[x.visaType])bv[x.visaType]={t:0,c:0};bv[x.visaType].t++;if(FINAL.includes(x.status))bv[x.visaType].c++;});
+  const bizR=(bv['Business Visa']?.c/bv['Business Visa']?.t*100||0).toFixed(1);
+  const visR=(bv['Visitor Visa']?.c/bv['Visitor Visa']?.t*100||0).toFixed(1);
+  document.getElementById('corrInsights').innerHTML=`
+    <p><strong>1. Pipeline vs Time:</strong> Completed avg <span class="istat">${ac} days</span>, in-progress avg <span class="istat">${ai} days</span>. "Application Submitted to Authority" is the main bottleneck.</p>
+    <p><strong>2. Visa Type:</strong> Business Visa completion <span class="istat">${bizR}%</span> vs Visitor <span class="istat">${visR}%</span>.</p>
+    <p><strong>3. Destination:</strong> US/UK typically longest; Singapore/Switzerland faster.</p>
+    <p><strong>4. Recommendation:</strong> Flag requests stuck &gt;30 days at any stage for follow-up.</p>`;
+}
+
+function renderInsights(d){
+  const total=d.length,comp=d.filter(x=>FINAL.includes(x.status)).length,ip=d.filter(x=>INPROG.includes(x.status)).length;
+  const wd=d.filter(x=>x.procDays!==null);const avg=wd.length?(wd.reduce((s,x)=>s+x.procDays,0)/wd.length).toFixed(1):0;
+  const tc={};d.forEach(x=>{tc[x.visaType]=(tc[x.visaType]||0)+1;});
+  const nc={};d.forEach(x=>{nc[x.nationality]=(nc[x.nationality]||0)+1;});
+  const dc={};d.forEach(x=>{dc[x.destination]=(dc[x.destination]||0)+1;});
+  const topT=Object.entries(tc).sort((a,b)=>b[1]-a[1])[0]||['-',0];
+  const topN=Object.entries(nc).sort((a,b)=>b[1]-a[1])[0]||['-',0];
+  const topD=Object.entries(dc).sort((a,b)=>b[1]-a[1])[0]||['-',0];
+  const dp={};d.filter(x=>x.procDays!==null).forEach(x=>{(dp[x.destination]=dp[x.destination]||[]).push(x.procDays);});
+  const fd=Object.entries(dp).map(([dest,days])=>({dest,avg:days.reduce((s,v)=>s+v,0)/days.length})).sort((a,b)=>a.avg-b.avg)[0];
+  const sd={};d.forEach(x=>{sd[x.status]=(sd[x.status]||0)+1;});
+  const bn=Object.entries(sd).filter(e=>INPROG.includes(e[0])).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('insightsContent').innerHTML=`
+    <div class="insight-card"><div class="insight-title">Summary</div><div class="insight-body"><p>${total} requests · ${Object.keys(tc).length} visa types · ${Object.keys(nc).length} nationalities · ${Object.keys(dc).length} destinations. Completion <span class="istat">${(comp/total*100).toFixed(1)}%</span>, ${ip} in pipeline.</p></div></div>
+    <div class="insight-card"><div class="insight-title">Distribution</div><div class="insight-body"><p><strong>${topT[0]}</strong> top visa type (${topT[1]}). <strong>${topN[0]}</strong> top nationality (${topN[1]}). <strong>${topD[0]}</strong> top destination (${topD[1]}).</p></div></div>
+    <div class="insight-card"><div class="insight-title">Efficiency</div><div class="insight-body"><p>Avg processing <span class="istat">${avg} days</span>. Fastest destination <strong>${fd?.dest||'N/A'}</strong> at <span class="istat">${fd?.avg.toFixed(1)||'N/A'} days</span>. Bottleneck: <strong>${bn?.[0]||'N/A'}</strong> (${bn?.[1]||0} stuck).</p></div></div>
+    <div class="insight-card"><div class="insight-title">Actions</div><div class="insight-body"><p>1. Alert requests >30 days in any stage.<br>2. Pre-check documents to speed "Docs Received → Submission".</p></div></div>`;
+}
+
+function renderRecords(d){
+  if(!isAdmin()){ // locked: keep table empty so no record data is visible/inspectable
+    document.getElementById('tableBody').innerHTML='';
+    document.getElementById('tableCount').textContent='Restricted';
+    return;
+  }
+  document.getElementById('tableCount').textContent=`${d.length} records`;
+  document.getElementById('tableBody').innerHTML=d.map(x=>`<tr><td>${x.id}</td><td>${x.applicant}</td><td>${x.visaType}</td><td>${x.nationality}</td><td>${x.destination}</td><td><span class="sbadge ${STATUS_CSS[x.status]||''}">${x.status}</span></td><td>${x.appDate||'-'}</td><td>${x.decDate||'-'}</td><td>${x.procDays||'-'}</td><td>${x.priority}</td></tr>`).join('');
+}
+function sortTable(ci){
+  const keys=['id','applicant','visaType','nationality','destination','status','appDate','decDate','procDays','priority'];
+  const k=keys[ci];sortDir[k]=!sortDir[k];
+  const d=getFiltered();
+  d.sort((a,b)=>{let va=a[k],vb=b[k];if(typeof va==='number')return sortDir[k]?va-vb:vb-va;va=(va||'').toString();vb=(vb||'').toString();return sortDir[k]?va.localeCompare(vb):vb.localeCompare(va);});
+  renderRecords(d);
+}
+
+function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type}`;setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ===== INIT =====
+(function(){
+  applyAccess();
+  if(loadCache()&&visaData.length){rebuildAll();}
+  else{updateStatus();}
+})();
+</script>
+</body>
+</html>
